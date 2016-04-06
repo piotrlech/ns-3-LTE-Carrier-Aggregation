@@ -118,7 +118,7 @@ CcHelper::EquallySpacedCcs ()
   std::map< uint8_t, Ptr<ComponentCarrierEnb> > ccmap;
 
   //m_numberOfComponentCarries = 2;
-  //NS_LOG_UNCOND ("CcHelper::EquallySpacedCcs::m_enbComponentCarriers=" << m_numberOfComponentCarries);
+  //NS_LOG_UNCOND ("CcHelper::EquallySpacedCcs::m_enbComponentCarriers=" << m_numberOfComponentCarries << ", m_dlBandwidth=" << m_dlBandwidth);
   for (uint16_t i = 0; i < m_numberOfComponentCarries; i++)
     {
       bool pc =false;

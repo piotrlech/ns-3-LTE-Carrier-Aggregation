@@ -22,7 +22,7 @@
  * 0-3	0.12	GTP	10.0.0.6<->10.0.0.5	UDP	1.0.0.2<->7.0.0.2
  * 2-2	0.12	GTP	10.0.0.6<->10.0.0.5	UDP	1.0.0.2<->7.0.0.2
  *
- * remoteHost(1-1: 1.0.0.2) ---- (0-2: 1.0.0.1)pgw(0-3: 10.0.0.6) ---- (2-2: 10.0.0.5)eNb >>>> (7.0.0.2)ue
+ * remoteHost(1-1:1.0.0.2) ---- (1.0.0.1:0-2)pgw(0-3: 10.0.0.6) ---- (10.0.0.5:2-2)eNb >>>> (7.0.0.2:3)ue
  */
 
 #include "ns3/lte-helper.h"
@@ -48,6 +48,12 @@ using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("EpcFirstExample");
 
+static void
+RxDrop (Ptr<const Packet> p)
+{
+  NS_LOG_UNCOND ("RxDrop at " << Simulator::Now ().GetSeconds ());
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -57,6 +63,7 @@ main (int argc, char *argv[])
   double distance = 60.0;
   double udpPacketInterval = 100;
   uint32_t tcpPktSize = 1400;         //in bytes. 1458 to prevent fragments
+  uint16_t verbose = 2;
 
   // Command line arguments
   CommandLine cmd;
@@ -65,9 +72,38 @@ main (int argc, char *argv[])
   cmd.AddValue("distance", "Distance between eNBs [m]", distance);
   cmd.AddValue("interPacketInterval", "Inter packet interval [ms])", udpPacketInterval);
   cmd.AddValue ("pktSize", "Packet size in bytes", tcpPktSize);
+  cmd.AddValue ("verbose", "Verbose level", verbose);
   cmd.Parse(argc, argv);
 
+  //Ptr<LteHelper> lteHelper = CreateObject<LteHelper> ();
+  Config::SetDefault ("ns3::LteRlcUm::MaxTxBufferSize", UintegerValue (1000000));
+  Config::SetDefault ("ns3::LteEnbNetDevice::DlBandwidth", UintegerValue (100));
+  //pio-NS_LOG_FUNCTION (this << GetName ());
+  Config::SetDefault ("ns3::LteSpectrumPhy::DataErrorModelEnabled", BooleanValue (false));
+  Config::SetDefault ("ns3::LteAmc::AmcModel", EnumValue (LteAmc::PiroEW2010));
+  //pio-Config::SetDefault ("ns3::LteHelper::UseIdealRrc", BooleanValue (m_useIdealRrc));
+
+  //Disable Uplink Power Control
+  Config::SetDefault ("ns3::LteUePhy::EnableUplinkPowerControl", BooleanValue (false));
+
+  /**
+   * Initialize Simulation Scenario: 1 eNB and m_nUser UEs
+   */
+
+
   Ptr<LteHelper> lteHelper = CreateObject<LteHelper> ();
+  Config::SetDefault ("ns3::RrFfMacScheduler::HarqEnabled", BooleanValue (false));
+  Config::SetDefault ("ns3::PfFfMacScheduler::HarqEnabled", BooleanValue (false));
+
+  //lteHelper->SetSchedulerAttribute ("HarqEnabled", BooleanValue (false));
+
+  //pio-lteHelper->SetAttribute ("PathlossModel", StringValue ("ns3::HybridBuildingsPropagationLossModel"));
+  //pio-lteHelper->SetPathlossModelAttribute ("ShadowSigmaOutdoor", DoubleValue (0.0));
+  //pio-lteHelper->SetPathlossModelAttribute ("ShadowSigmaIndoor", DoubleValue (0.0));
+  //pio-lteHelper->SetPathlossModelAttribute ("ShadowSigmaExtWalls", DoubleValue (0.0));
+
+  //pio-end
+
   Ptr<PointToPointEpcHelper>  epcHelper = CreateObject<PointToPointEpcHelper> ();
   lteHelper->SetEpcHelper (epcHelper);
 
@@ -127,12 +163,12 @@ main (int argc, char *argv[])
 
   //piotr
   //NS_LOG_UNCOND("BEFORE=" << ueNodes.Get(0)->GetDevice(0)->GetObject<LteUeNetDevice>()->GetRrc()->GetLteCcmRrcSapProvider());
-  ueNodes.Get(0)->GetDevice(0)->GetObject<LteUeNetDevice>()->GetRrc()->GetLteCcmRrcSapProvider()->AmIalive();
+  //ueNodes.Get(0)->GetDevice(0)->GetObject<LteUeNetDevice>()->GetRrc()->GetLteCcmRrcSapProvider()->AmIalive();
   //NS_LOG_UNCOND("AFTER=");
   Ptr<Node> ue = ueNodes.Get (0);
   //NS_LOG_UNCOND("ue=" << ue << "i=" << 0 << ", " << ue->GetDevice (0)->GetTypeId ());
   //Ptr<NetDevice> dev = ue->GetDevice (0);
-  lteHelper->test(ueNodes);         // 2crash
+  //lteHelper->test(ueNodes);         // 2crash
 
   // Install the IP stack on the UEs
   internet.Install (ueNodes);
@@ -152,8 +188,8 @@ main (int argc, char *argv[])
       {
         lteHelper->Attach (ueLteDevs.Get(i), enbLteDevs.Get(i));
         // side effect: the default EPS bearer will be activated
+        //enbLteDevs.Get(i)->SetAttribute ("DlBandwidth", UintegerValue (5));
       }
-
 
   // Install and start applications on UEs and remote host
   uint16_t dlPort = 1234;
@@ -217,7 +253,21 @@ main (int argc, char *argv[])
   clientApps.Start (Seconds (0.1));
   lteHelper->EnableTraces ();
   // Uncomment to enable PCAP tracing
-  p2ph.EnablePcapAll("piotr-epc-first");
+  if (verbose > 1)
+    p2ph.EnablePcapAll("piotr-epc-first");
+
+  if (verbose > 5)
+    {
+      ueLteDevs.Get (0)->TraceConnectWithoutContext ("PhyRxDrop", MakeCallback (&RxDrop));
+      enbLteDevs.Get(0)->TraceConnectWithoutContext ("PhyRxDrop", MakeCallback (&RxDrop));
+      //enbNodes.Get(0)->GetDevice(0)->GetObject<LtePdcp>()->TraceConnectWithoutContext ("RxPDU", MakeCallback (&RxDrop));
+      //NS_LOG_UNCOND(enbNodes.Get(0)->GetDevice(0)->GetObject<LtePdcp>()->GetStatus().txSn);
+      //NS_LOG_UNCOND("pdcp=" << ueNodes.Get(0)->GetDevice(0)->GetObject<LteUeNetDevice>()->GetRrc()->Get);
+      LogComponentEnable("TcpL4Protocol", LOG_LEVEL_ALL);
+      LogComponentEnable("LtePdcp", LOG_LEVEL_ALL);
+      LogComponentEnable("LteRlcAm", LOG_LEVEL_ALL);
+      LogComponentEnable("LteRlcUm", LOG_LEVEL_ALL);
+    }
 
   Simulator::Stop(Seconds(simTime));
   Simulator::Run();

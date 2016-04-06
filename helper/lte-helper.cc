@@ -219,7 +219,7 @@ void
 LteHelper::ChannelModelInitialized (void)
 {
   //m_noOfCcs = 2;
-  ////NS_LOG_UNCOND("LteHelper::ChannelModelInitialized::m_noOfCcs=" << m_noOfCcs);
+  //NS_LOG_UNCOND("LteHelper::ChannelModelInitialized::m_noOfCcs=" << m_noOfCcs);
   // Channel Object (i.e. Ptr<SpecturmChannel>) are within a vector
   // PathLossModel Objects are vectors --> in InstallSingleEnb we will set the frequency
   NS_LOG_FUNCTION (this << m_noOfCcs);
@@ -520,7 +520,7 @@ Ptr<NetDevice>
 LteHelper::InstallSingleEnbDevice (Ptr<Node> n)
 {
   //m_noOfCcs = 1;
-  ////NS_LOG_UNCOND("LteHelper::InstallSingleEnbDevice::m_noOfCcs=" << m_noOfCcs);
+  //NS_LOG_UNCOND("LteHelper::InstallSingleEnbDevice::m_noOfCcs=" << m_noOfCcs);
   NS_ABORT_MSG_IF (m_cellIdCounter == 65535, "max num eNBs exceeded");
   uint16_t cellId = ++m_cellIdCounter;
   std::map<uint8_t,Ptr<ComponentCarrierEnb> >::iterator it;
@@ -529,16 +529,16 @@ LteHelper::InstallSingleEnbDevice (Ptr<Node> n)
   Ptr<LteEnbNetDevice> dev = m_enbNetDeviceFactory.Create<LteEnbNetDevice> ();
   Ptr<LteHandoverAlgorithm> handoverAlgorithm = m_handoverAlgorithmFactory.Create<LteHandoverAlgorithm> ();
 
-  ////NS_LOG_UNCOND ("UlEarfcn=" << dev->GetUlEarfcn() << ", DlEarfcn=" << dev->GetDlEarfcn() << ", DlBandwidth=" << (uint16_t)dev->GetDlBandwidth() << ", UlBandwidth=" << (uint16_t)dev->GetUlBandwidth());
+  //NS_LOG_UNCOND ("LteHelper::InstallSingleEnbDevice::UlEarfcn=" << dev->GetUlEarfcn() << ", DlEarfcn=" << dev->GetDlEarfcn() << ", DlBandwidth=" << (uint16_t)dev->GetDlBandwidth() << ", UlBandwidth=" << (uint16_t)dev->GetUlBandwidth());
 
   if (m_useCa == false)
     {
       // we need to create a single Map now
-      DoCreateEnbComponentCarrierMap (dev->GetUlEarfcn (), dev->GetDlEarfcn (), dev->GetDlBandwidth (), dev->GetUlBandwidth ());
+      DoCreateEnbComponentCarrierMap (dev->GetUlEarfcn (), dev->GetDlEarfcn (), dev->GetUlBandwidth (), dev->GetDlBandwidth ());
     }
   else
     {
-      ////NS_LOG_UNCOND ("LteHelper::InstallSingleEnbDevice(1)::m_enbComponentCarrierMap.size=" << m_enbComponentCarrierMap.size ());
+      //NS_LOG_UNCOND ("LteHelper::InstallSingleEnbDevice(1)::m_enbComponentCarrierMap.size=" << m_enbComponentCarrierMap.size ());
       /*/LteHelper::DoCreateEnbComponentCarrierMap (uint16_t ulearfc, uint16_t dlearfcn, uint8_t ulbw, uint8_t dlbw)
       Ptr<CcHelper> cch = CreateObject<CcHelper> ();
       cch->m_numberOfComponentCarries = 1;
@@ -547,8 +547,8 @@ LteHelper::InstallSingleEnbDevice (Ptr<Node> n)
       cch->m_dlBandwidth = dev->GetDlBandwidth ();
       cch->m_ulBandwidth = dev->GetUlBandwidth ();
       m_enbComponentCarrierMap = cch->EquallySpacedCcs ();*/
-      DoCreateEnbComponentCarrierMap (dev->GetUlEarfcn (), dev->GetDlEarfcn (), dev->GetDlBandwidth (), dev->GetUlBandwidth ());
-      ////NS_LOG_UNCOND ("LteHelper::InstallSingleEnbDevice(1)::m_enbComponentCarrierMap.size=" << m_enbComponentCarrierMap.size ());
+      DoCreateEnbComponentCarrierMap (dev->GetUlEarfcn (), dev->GetDlEarfcn (), dev->GetUlBandwidth (), dev->GetDlBandwidth ());
+      //NS_LOG_UNCOND ("LteHelper::InstallSingleEnbDevice(1)::m_enbComponentCarrierMap.size=" << m_enbComponentCarrierMap.size ());
       NS_ABORT_MSG_IF (m_enbComponentCarrierMap.empty () == true, "You have to either define a valid Carrier Component MAP or disable Ca");
     }
   
@@ -642,11 +642,11 @@ LteHelper::InstallSingleEnbDevice (Ptr<Node> n)
   bool ccmTest;
   uint16_t tmpCounter = 0;
 
-  ////NS_LOG_UNCOND("LteHelper::InstallSingleEnbDevice(2)::m_enbComponentCarrierMap.size=" << m_enbComponentCarrierMap.size ());
+  //NS_LOG_UNCOND("LteHelper::InstallSingleEnbDevice(2)::m_enbComponentCarrierMap.size=" << m_enbComponentCarrierMap.size ());
 
   for (it = m_enbComponentCarrierMap.begin (); it != m_enbComponentCarrierMap.end (); ++it)
     {
-      ////NS_LOG_UNCOND("LteHelper::InstallSingleEnbDevice::GetPhy ()" << it->second->GetPhy() << ", GetMac()=" << it->second->GetMac() );
+      //NS_LOG_UNCOND("LteHelper::InstallSingleEnbDevice::GetPhy ()" << it->second->GetPhy() << ", GetMac()=" << it->second->GetMac() );
       it->second->GetPhy ()->SetLteEnbCphySapUser (rrc->GetLteEnbCphySapUser (tmpCounter));
       rrc->SetLteEnbCphySapProvider (it->second->GetPhy ()->GetLteEnbCphySapProvider (), tmpCounter);
 
@@ -744,7 +744,7 @@ LteHelper::InstallSingleEnbDevice (Ptr<Node> n)
       tmpPhy->GetUlSpectrumPhy ()->SetLtePhyRxDataEndOkCallback (MakeCallback (&LteEnbPhy::PhyPduReceived, tmpPhy));
       tmpPhy->GetUlSpectrumPhy ()->SetLtePhyRxCtrlEndOkCallback (MakeCallback (&LteEnbPhy::ReceiveLteControlMessageList, tmpPhy));
       tmpPhy->GetUlSpectrumPhy ()->SetLtePhyUlHarqFeedbackCallback (MakeCallback (&LteEnbPhy::ReceiveLteUlHarqFeedback, tmpPhy));
-      NS_LOG_LOGIC ("set the propagation model frequencies");
+      //NS_LOG_LOGIC ("set the propagation model frequencies");
       double dlFreq = LteSpectrumValueHelper::GetCarrierFrequency (it->second->m_dlEarfcn);
       NS_LOG_LOGIC ("DL freq: " << dlFreq);
       bool dlFreqOk = m_downlinkPathlossModel.at (counter)->SetAttributeFailSafe ("Frequency", DoubleValue (dlFreq));
@@ -1345,6 +1345,8 @@ LteHelper::DoCreateEnbComponentCarrierMap (uint16_t ulearfc, uint16_t dlearfcn, 
   cch->m_dlBandwidth = dlbw;
   cch->m_ulBandwidth = ulbw;
   m_enbComponentCarrierMap = cch->EquallySpacedCcs ();
+
+  //NS_LOG_UNCOND ("LteHelper::DoCreateEnbComponentCarrierMap::cch->m_dlBandwidth=" << cch->m_dlBandwidth);
  
   //it = m_enbComponentCarrierMap.begin ();
   for (it = m_enbComponentCarrierMap.begin (); it != m_enbComponentCarrierMap.end (); ++it)
