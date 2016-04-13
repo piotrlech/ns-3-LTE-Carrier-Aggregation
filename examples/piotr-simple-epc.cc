@@ -76,7 +76,14 @@ main (int argc, char *argv[])
   cmd.Parse(argc, argv);
 
   //Ptr<LteHelper> lteHelper = CreateObject<LteHelper> ();
-  Config::SetDefault ("ns3::LteRlcUm::MaxTxBufferSize", UintegerValue (1000000));
+  simTime = 1;
+  if (true)
+    {
+      Config::SetDefault ("ns3::LteHelper::UseCa", BooleanValue (true));
+      Config::SetDefault ("ns3::LteHelper::NumberOfComponentCarriers", UintegerValue (2));
+    }
+
+  /*Config::SetDefault ("ns3::LteRlcUm::MaxTxBufferSize", UintegerValue (1000000));
   Config::SetDefault ("ns3::LteEnbNetDevice::DlBandwidth", UintegerValue (100));
   //pio-NS_LOG_FUNCTION (this << GetName ());
   Config::SetDefault ("ns3::LteSpectrumPhy::DataErrorModelEnabled", BooleanValue (false));
@@ -84,7 +91,7 @@ main (int argc, char *argv[])
   //pio-Config::SetDefault ("ns3::LteHelper::UseIdealRrc", BooleanValue (m_useIdealRrc));
 
   //Disable Uplink Power Control
-  Config::SetDefault ("ns3::LteUePhy::EnableUplinkPowerControl", BooleanValue (false));
+  Config::SetDefault ("ns3::LteUePhy::EnableUplinkPowerControl", BooleanValue (false));*/
 
   /**
    * Initialize Simulation Scenario: 1 eNB and m_nUser UEs
@@ -92,8 +99,8 @@ main (int argc, char *argv[])
 
 
   Ptr<LteHelper> lteHelper = CreateObject<LteHelper> ();
-  Config::SetDefault ("ns3::RrFfMacScheduler::HarqEnabled", BooleanValue (false));
-  Config::SetDefault ("ns3::PfFfMacScheduler::HarqEnabled", BooleanValue (false));
+  /*Config::SetDefault ("ns3::RrFfMacScheduler::HarqEnabled", BooleanValue (false));
+  Config::SetDefault ("ns3::PfFfMacScheduler::HarqEnabled", BooleanValue (false));*/
 
   //lteHelper->SetSchedulerAttribute ("HarqEnabled", BooleanValue (false));
 

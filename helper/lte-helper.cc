@@ -650,14 +650,14 @@ LteHelper::InstallSingleEnbDevice (Ptr<Node> n)
       it->second->GetPhy ()->SetLteEnbCphySapUser (rrc->GetLteEnbCphySapUser (tmpCounter));
       rrc->SetLteEnbCphySapProvider (it->second->GetPhy ()->GetLteEnbCphySapProvider (), tmpCounter);
 
-      rrc->SetLteEnbCmacSapProvider (it->second->GetMac ()->GetLteEnbCmacSapProvider (), tmpCounter );//crash1 in GetLteEnbCmacSapProvider()
+      //NS_LOG_UNCOND("LteHelper::InstallSingleEnbDevice::tmpCounter=" << tmpCounter);
+      rrc->SetLteEnbCmacSapProvider (it->second->GetMac ()->GetLteEnbCmacSapProvider (), tmpCounter );
       it->second->GetMac ()->SetLteEnbCmacSapUser (rrc->GetLteEnbCmacSapUser (tmpCounter));
       //FFR SAP
       it->second->GetFfMacScheduler ()->SetLteFfrSapProvider (it->second->GetFfrAlgorithm ()->GetLteFfrSapProvider ());
       it->second->GetFfrAlgorithm ()->SetLteFfrSapUser (it->second->GetFfMacScheduler ()->GetLteFfrSapUser ());
       rrc->SetLteFfrRrcSapProvider (it->second->GetFfrAlgorithm ()->GetLteFfrRrcSapProvider (), tmpCounter);
-      it->second->GetFfrAlgorithm ()->SetLteFfrRrcSapUser (rrc->GetLteFfrRrcSapUser (tmpCounter));  //crash11
-      //it->second->GetFfrAlgorithm ()->SetLteFfrRrcSapUser (rrc->GetLteFfrRrcSapUser (0));  //crash11
+      it->second->GetFfrAlgorithm ()->SetLteFfrRrcSapUser (rrc->GetLteFfrRrcSapUser (tmpCounter));
       //FFR SAP END
 
       // PHY <--> MAC SAP
@@ -701,12 +701,15 @@ LteHelper::InstallSingleEnbDevice (Ptr<Node> n)
   //std::cout << "m_enbComponentCarrierMap.size () " << (uint16_t)m_enbComponentCarrierMap.size () << std::endl;
   dev->SetCcMap (m_enbComponentCarrierMap);
   //dev->SetAttribute ("LteEnbMac", PointerValue (mac));
-  it = m_enbComponentCarrierMap.begin ();
+  //it = m_enbComponentCarrierMap.begin ();
   // This attribute is not used (just for some tests)
-  dev->SetAttribute ("FfMacScheduler", PointerValue (it->second->GetFfMacScheduler ()));
-  dev->SetAttribute ("LteEnbRrc", PointerValue (rrc));
-  dev->SetAttribute ("LteHandoverAlgorithm", PointerValue (handoverAlgorithm));
-  dev->SetAttribute ("LteFfrAlgorithm", PointerValue (it->second->GetFfrAlgorithm ()));
+  for (it = m_enbComponentCarrierMap.begin (); it != m_enbComponentCarrierMap.end (); ++it)
+    {
+      dev->SetAttribute ("FfMacScheduler", PointerValue (it->second->GetFfMacScheduler ()));
+      dev->SetAttribute ("LteEnbRrc", PointerValue (rrc));
+      dev->SetAttribute ("LteHandoverAlgorithm", PointerValue (handoverAlgorithm));
+      dev->SetAttribute ("LteFfrAlgorithm", PointerValue (it->second->GetFfrAlgorithm ()));
+    }
 /*  piotr
     .AddAttribute ("LteFfrAlgorithm",
                    "The FFR algorithm associated to this EnbNetDevice",
@@ -921,16 +924,17 @@ LteHelper::InstallSingleUeDevice (Ptr<Node> n)
   uint16_t tmpCounter = 0;
   for (it=m_ueComponentCarrierMap.begin (); it != m_ueComponentCarrierMap.end (); ++it)
     {
-      rrc->SetLteUeCmacSapProvider (it->second->GetMac ()->GetLteUeCmacSapProvider (), tmpCounter);
+      //NS_LOG_UNCOND("LteHelper::InstallSingleUeDevice::tmpCounter=" << tmpCounter);
+      rrc->SetLteUeCmacSapProvider (it->second->GetMac ()->GetLteUeCmacSapProvider (), tmpCounter); // 07crash11 - cmacSapProvider.size=1
       it->second->GetMac ()->SetLteUeCmacSapUser (rrc->GetLteUeCmacSapUser (tmpCounter));
+      it->second->GetPhy ()->SetLteUePhySapUser ( it->second->GetMac ()->GetLteUePhySapUser ());
+      it->second->GetMac ()->SetLteUePhySapProvider ( it->second->GetPhy ()->GetLteUePhySapProvider ());
+      rrc->SetLteMacSapProvider (it->second->GetMac ()->GetLteMacSapProvider ());
+      it->second->GetPhy ()->SetLteUeCphySapUser (rrc->GetLteUeCphySapUser ());
+      rrc->SetLteUeCphySapProvider (it->second->GetPhy ()->GetLteUeCphySapProvider ());
       tmpCounter++;
     }
-  it = m_ueComponentCarrierMap.begin ();
-  it->second->GetPhy ()->SetLteUePhySapUser ( it->second->GetMac ()->GetLteUePhySapUser ());
-  it->second->GetMac ()->SetLteUePhySapProvider ( it->second->GetPhy ()->GetLteUePhySapProvider ());
-  rrc->SetLteMacSapProvider (it->second->GetMac ()->GetLteMacSapProvider ());
-  it->second->GetPhy ()->SetLteUeCphySapUser (rrc->GetLteUeCphySapUser ());
-  rrc->SetLteUeCphySapProvider (it->second->GetPhy ()->GetLteUeCphySapProvider ());
+  //it = m_ueComponentCarrierMap.begin ();
 
   NS_ABORT_MSG_IF (m_imsiCounter >= 0xFFFFFFFF, "max num UEs exceeded");
   uint64_t imsi = ++m_imsiCounter;
@@ -1339,7 +1343,7 @@ LteHelper::DoCreateEnbComponentCarrierMap (uint16_t ulearfc, uint16_t dlearfcn, 
 {
   std::map<uint8_t,Ptr<ComponentCarrierEnb> >::iterator it;
   Ptr<CcHelper> cch = CreateObject<CcHelper> ();
-  cch->m_numberOfComponentCarries = 1;
+  cch->m_numberOfComponentCarries = m_noOfCcs;
   cch->m_ulEarfcn = ulearfc;
   cch->m_dlEarfcn = dlearfcn;
   cch->m_dlBandwidth = dlbw;
@@ -1449,24 +1453,30 @@ LteHelper::AssignStreams (NetDeviceContainer c, int64_t stream)
         {
           std::map< uint8_t, Ptr <ComponentCarrierEnb> > tmpMap = lteEnb->GetCcMap ();
           std::map< uint8_t, Ptr <ComponentCarrierEnb> >::iterator it;
-          it = tmpMap.begin ();
-          Ptr<LteSpectrumPhy> dlPhy = it->second->GetPhy ()->GetDownlinkSpectrumPhy ();
-          Ptr<LteSpectrumPhy> ulPhy = it->second->GetPhy ()->GetUplinkSpectrumPhy ();
-          currentStream += dlPhy->AssignStreams (currentStream);
-          currentStream += ulPhy->AssignStreams (currentStream);
+          //it = tmpMap.begin ();
+          for (it = tmpMap.begin (); it != tmpMap.end (); ++it)
+            {
+              Ptr<LteSpectrumPhy> dlPhy = it->second->GetPhy ()->GetDownlinkSpectrumPhy ();
+              Ptr<LteSpectrumPhy> ulPhy = it->second->GetPhy ()->GetUplinkSpectrumPhy ();
+              currentStream += dlPhy->AssignStreams (currentStream);
+              currentStream += ulPhy->AssignStreams (currentStream);
+            }
         }
       Ptr<LteUeNetDevice> lteUe = DynamicCast<LteUeNetDevice> (netDevice);
       if (lteUe)
         {
           std::map< uint8_t, Ptr <ComponentCarrierUe> > tmpMap = lteUe->GetCcMap ();
           std::map< uint8_t, Ptr <ComponentCarrierUe> >::iterator it;
-          it = tmpMap.begin ();
-          Ptr<LteSpectrumPhy> dlPhy = it->second->GetPhy ()->GetDownlinkSpectrumPhy ();
-          Ptr<LteSpectrumPhy> ulPhy = it->second->GetPhy ()->GetUplinkSpectrumPhy ();
-          Ptr<LteUeMac> ueMac = lteUe->GetMac ();
-          currentStream += dlPhy->AssignStreams (currentStream);
-          currentStream += ulPhy->AssignStreams (currentStream);
-          currentStream += ueMac->AssignStreams (currentStream);
+          //it = tmpMap.begin ();
+          for (it = tmpMap.begin (); it != tmpMap.end (); ++it)
+            {
+              Ptr<LteSpectrumPhy> dlPhy = it->second->GetPhy ()->GetDownlinkSpectrumPhy ();
+              Ptr<LteSpectrumPhy> ulPhy = it->second->GetPhy ()->GetUplinkSpectrumPhy ();
+              Ptr<LteUeMac> ueMac = lteUe->GetMac ();
+              currentStream += dlPhy->AssignStreams (currentStream);
+              currentStream += ulPhy->AssignStreams (currentStream);
+              currentStream += ueMac->AssignStreams (currentStream);
+            }
         }
     }
   return (currentStream - stream);

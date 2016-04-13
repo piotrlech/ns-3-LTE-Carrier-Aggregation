@@ -155,6 +155,7 @@ LteUePhy::LteUePhy (Ptr<LteSpectrumPhy> dlPhy, Ptr<LteSpectrumPhy> ulPhy)
     m_ueMeasurementsFilterLast (MilliSeconds (0)),
     m_rsrpSinrSampleCounter (0)
 {
+  NS_LOG_UNCOND ("LteUePhy::LteUePhy=" << this);
   m_amc = CreateObject <LteAmc> ();
   m_powerControl = CreateObject <LteUePowerControl> ();
   m_uePhySapProvider = new UeMemberLteUePhySapProvider (this);
@@ -178,6 +179,7 @@ void
 LteUePhy::DoDispose ()
 {
   NS_LOG_FUNCTION (this);
+  NS_LOG_UNCOND ("LteUePhy::DoDispose=" << this);
   delete m_uePhySapProvider;
   delete m_ueCphySapProvider;
   LtePhy::DoDispose ();
@@ -613,7 +615,9 @@ LteUePhy::GenerateMixedCqiReport (const SpectrumValue& sinr)
   NS_ASSERT (m_state != CELL_SEARCH);
   NS_ASSERT (m_cellId > 0);
   
-  SpectrumValue mixedSinr = (m_rsReceivedPower * m_paLinear);
+  SpectrumValue mixedSinr = (m_rsReceivedPower * m_paLinear); //07crash - m_rsReceivedPower is blank instead of m_rsReceivedPower=0 0 0 0 0 0
+  NS_LOG_UNCOND("LteUePhy::GenerateMixedCqiReport=" << this << ", mixedSinr=" << mixedSinr << ", m_rsReceivedPower=" << m_rsReceivedPower << ", m_paLinear=" << m_paLinear);
+  //m_rsReceivedPower[0];
   if (m_dataInterferencePowerUpdated)
     {
       // we have a measurement of interf + noise for the denominator
@@ -642,7 +646,7 @@ LteUePhy::GenerateMixedCqiReport (const SpectrumValue& sinr)
   for(uint32_t i = 0; i < (m_dlBandwidth-1-modulo); i++) 
     {
       usedRbgNum++;
-      avgMixedSinr+=mixedSinr[i];
+      avgMixedSinr+=mixedSinr[i]; // 07crash11
     }
   avgMixedSinr = avgMixedSinr/usedRbgNum;
   for(uint32_t i = 0; i < modulo; i++) 
@@ -674,25 +678,33 @@ void
 LteUePhy::ReportRsReceivedPower (const SpectrumValue& power)
 {
   NS_LOG_FUNCTION (this << power);
-  m_rsReceivedPowerUpdated = true;
-  m_rsReceivedPower = power;
-
-  if (m_enableUplinkPowerControl)
+  NS_LOG_UNCOND ("LteUePhy=" << this << ", LteUePhy::ReportRsReceivedPower::power=" << power << ", ref=" << power.GetReferenceCount ());
+  Values::const_iterator it1 = power.ConstValuesBegin ();
+  //if (it1 != power.ConstValuesEnd ())
+  if (true)
     {
-      double sum = 0;
-      uint32_t rbNum = 0;
-      Values::const_iterator it;
-      for (it = m_rsReceivedPower.ConstValuesBegin (); it != m_rsReceivedPower.ConstValuesEnd (); it++)
-        {
-          double powerTxW = ((*it) * 180000);
-          sum += powerTxW;
-          rbNum++;
-        }
-      double rsrp = 10 * log10 (sum) + 30;
+      m_rsReceivedPowerUpdated = true;
+      m_rsReceivedPower = power;
 
-      NS_LOG_INFO ("RSRP: " << rsrp);
-      m_powerControl->SetRsrp (rsrp);
+      if (m_enableUplinkPowerControl)
+        {
+          double sum = 0;
+          uint32_t rbNum = 0;
+          Values::const_iterator it;
+          for (it = m_rsReceivedPower.ConstValuesBegin (); it != m_rsReceivedPower.ConstValuesEnd (); it++)
+            {
+              double powerTxW = ((*it) * 180000);
+              sum += powerTxW;
+              rbNum++;
+            }
+          double rsrp = 10 * log10 (sum) + 30;
+
+          NS_LOG_INFO ("RSRP: " << rsrp);
+          m_powerControl->SetRsrp (rsrp);
+        }
     }
+  else
+    NS_LOG_UNCOND ("LteUePhy=" << this << ", LteUePhy::ReportRsReceivedPower::NO POWER");
 }
 
 Ptr<DlCqiLteControlMessage>
@@ -1077,6 +1089,7 @@ void
 LteUePhy::SubframeIndication (uint32_t frameNo, uint32_t subframeNo)
 {
   NS_LOG_FUNCTION (this << frameNo << subframeNo);
+  NS_LOG_UNCOND ("LteUePhy=" << this << ", LteUePhy::SubframeIndication=" << frameNo << subframeNo);
 
   NS_ASSERT_MSG (frameNo > 0, "the SRS index check code assumes that frameNo starts at 1");
 

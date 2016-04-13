@@ -139,6 +139,9 @@ LteUeRrc::LteUeRrc ()
     m_csgWhiteList (0)
 {
   NS_LOG_FUNCTION (this);
+
+  int maxCC=5;
+
   //m_cphySapUser = new MemberLteUeCphySapUser<LteUeRrc> (this);
   // m_cmacSapUser = new UeMemberLteUeCmacSapUser (this);
   m_rrcSapProvider = new MemberLteUeRrcSapProvider<LteUeRrc> (this);
@@ -146,10 +149,10 @@ LteUeRrc::LteUeRrc ()
   m_asSapProvider = new MemberLteAsSapProvider<LteUeRrc> (this);
   m_ccmRrcSapUser = new MemberLteUeCcmRrcSapUser<LteUeRrc> (this);
   m_supportCa = false;
-  m_cphySapUser.resize (1);
-  m_cphySapProvider.resize (1);
-  m_cmacSapUser.resize (1);
-  m_cmacSapProvider.resize (1);
+  m_cphySapUser.resize (maxCC);
+  m_cphySapProvider.resize (maxCC);
+  m_cmacSapUser.resize (maxCC);
+  m_cmacSapProvider.resize (maxCC);
   for ( uint16_t i = 0; i < m_cphySapUser.size (); i++)
     {
       m_cphySapUser[i] = new MemberLteUeCphySapUser<LteUeRrc> (this);
@@ -317,7 +320,8 @@ void
 LteUeRrc::SetLteUeCmacSapProvider (LteUeCmacSapProvider * s, uint16_t index)
 {
   NS_LOG_FUNCTION (this << s);
-  m_cmacSapProvider.at (index) = s;
+  //NS_LOG_UNCOND("LteUeRrc::SetLteUeCmacSapProvider::m_cmacSapProvider.size()=" << m_cmacSapProvider.size());
+  m_cmacSapProvider.at (index) = s; // 07crash10
 }
 
 LteUeCmacSapUser*

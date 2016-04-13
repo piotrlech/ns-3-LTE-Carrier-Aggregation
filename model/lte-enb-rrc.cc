@@ -165,6 +165,7 @@ UeManager::DoInitialize ()
   //NS_LOG_UNCOND("UeManager::DoInitialize::m_rrc->m_numberOfComponentCarriers=" << m_rrc->m_numberOfComponentCarriers);
   for (uint16_t i = 0; i < m_rrc->m_numberOfComponentCarriers; i++)
     {
+      //NS_LOG_UNCOND("UeManager::DoInitialize::i=" << i << ", m_cmacSapProvider.size()" << m_rrc->m_cmacSapProvider.size() << ", m_rnti=" << m_rnti);
       m_rrc->m_cmacSapProvider.at (i)->AddUe (m_rnti);
       m_rrc->m_cphySapProvider.at (i)->AddUe (m_rnti);
     }
@@ -1381,7 +1382,7 @@ LteEnbRrc::LteEnbRrc ()
 {
   NS_LOG_FUNCTION (this);
   
-  int piotrhack = 1;
+  int maxCC = 5;
 
   m_handoverManagementSapUser = new MemberLteHandoverManagementSapUser<LteEnbRrc> (this);
   m_anrSapUser = new MemberLteAnrSapUser<LteEnbRrc> (this);
@@ -1390,10 +1391,10 @@ LteEnbRrc::LteEnbRrc ()
   m_x2SapUser = new EpcX2SpecificEpcX2SapUser<LteEnbRrc> (this);
   m_s1SapUser = new MemberEpcEnbS1SapUser<LteEnbRrc> (this);
   //m_cphySapUser = new MemberLteEnbCphySapUser<LteEnbRrc> (this);
-  m_cphySapUser.resize (piotrhack);
+  m_cphySapUser.resize (maxCC);
   //m_cphySapProvider.resize (1);
-  m_cmacSapUser.resize (piotrhack);
-  m_ffrRrcSapUser.resize (piotrhack);
+  m_cmacSapUser.resize (maxCC);
+  m_ffrRrcSapUser.resize (maxCC);
   for ( uint16_t i = 0; i < m_cphySapUser.size (); i++)
     {
       m_cphySapUser[i] = new MemberLteEnbCphySapUser<LteEnbRrc> (this);
@@ -1710,7 +1711,7 @@ LteFfrRrcSapUser*
 LteEnbRrc::GetLteFfrRrcSapUser (uint16_t index)
 {
   NS_LOG_FUNCTION (this);
-  return m_ffrRrcSapUser.at (index);  // crash10
+  return m_ffrRrcSapUser.at (index);
 }
 
 void
